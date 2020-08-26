@@ -1,0 +1,2 @@
+paho-mqtt==1.5.0
+cx-Oracle==8.0.0

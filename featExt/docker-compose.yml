@@ -1,0 +1,22 @@
+version: '2.4'
+services:
+    edgeai_8cwH3zaAWEwLPTB9XSHJNE_feature-extraction:
+        environment:
+            ECCI_PUB_TARGETS: "{'predictor': 'WbQFj3A6FhvHpWuJoBgYNL'}"
+            ECCI_CONTAINER_TYPE: edge
+            ECCI_APP_ID: 8cwH3zaAWEwLPTB9XSHJNE
+            ECCI_CONTAINER_NAME: feature-extraction
+            ECCI_LOCAL_CONTAINERS: "['edgeai_8cwH3zaAWEwLPTB9XSHJNE_feature-extraction']"
+            ECCI_LOCAL_BROKER_IP: 192.168.0.23
+            ECCI_LOCAL_BROKER_PORT: 1888
+            ECCI_LOCAL_BROKER_ID: WbQFj3A6FhvHpWuJoBgYNL
+            ECCI_AGENT_ID: agent-id
+            ECCI_APP_TYPE: controller
+            ECCI_AGENT_IP: 192.168.0.23
+        volumes:
+            - ./feature_extract.py:/featExt/feature_extract.py
+            - ./feature_extract_func.py:/featExt/feature_extract_func.py
+            - ./ecci_sdk.py:/featExt/ecci_sdk.py
+        image: feature_extract:v1
+        container_name: edgeai_8cwH3zaAWEwLPTB9XSHJNE_feature-extraction
+        restart: always

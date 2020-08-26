@@ -1,0 +1,24 @@
+version: '2.4'
+services:
+    edgeai_8cwH3zaAWEwLPTB9XSHJNE_blur:
+        environment:
+
+            ECCI_CONTAINER_TYPE: edge
+            ECCI_APP_ID: 8cwH3zaAWEwLPTB9XSHJNE
+            ECCI_CONTAINER_NAME: blur
+            ECCI_LOCAL_CONTAINERS: "['edgeai_8cwH3zaAWEwLPTB9XSHJNE_preprocess']"
+            ECCI_LOCAL_BROKER_IP: 192.168.0.23
+            ECCI_LOCAL_BROKER_PORT: 1888
+            ECCI_LOCAL_BROKER_ID: WbQFj3A6FhvHpWuJoBgYNL
+            ECCI_AGENT_ID: agent-id
+            ECCI_APP_TYPE: controller
+            ECCI_AGENT_IP: 192.168.0.23
+        volumes:
+            - ./pred.py:/blur/pred.py
+            - ./ecci_sdk.py:/blur/ecci_sdk.py
+            - ./results.txt:/blur/results.txt
+            - ./models:/blur/models
+            
+        image: blur:v1
+        container_name: edgeai_8cwH3zaAWEwLPTB9XSHJNE_blur
+        restart: always
