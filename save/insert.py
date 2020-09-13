@@ -5,14 +5,26 @@ import time
 import cx_Oracle
 import os
 
+id_ds = -1
 id_irons = -1
 id_life = -1
 id_running = -1
+id_cls = -1
+
+iron_flag = 0
+knife_flag = 0
+running_flag = 0
 
 def receive_mqtt_msg(cursor):
     global id_irons
     global id_life
     global id_running
+    global id_ds
+    global id_cls
+
+    global iron_flag
+    global knife_flag
+    global running_flag
 
     while True:
         # Message queues for 'data' type
@@ -30,33 +42,63 @@ def receive_mqtt_msg(cursor):
             if send_msg == "datasource":
                 pass
 
-            # elif send_msg == "feature-extraction": 
-            #     nsert_sql = "insert into downsample_table(id, A1, A2, A3, V1, V2, V3) values(:num, :iron_score, :iron)"
-            #     param = data_msg["down_sample"]
-            #     cursor.executemany('insert into downsample_table(id, A1, A2, A3, V1, V2, V3) values(:id,:0,:1,:2,:3,:4,:5)', param)
+            elif send_msg == "feature-extraction-1": 
+                id_ds += 1
+                t = [data_msg["time"], id_ds]
+                param = [ t + d_s.tolist() for d_s in data_msg["down_sample"]]
+                # print(f"------DownSample-------,{param}")
+                cursor.executemany('insert into downsample_table(time, id, A1, A2, A3, V1, V2, V3) values(:0,:1,:2,:3,:4,:5,:6,:7)', param)
+                
+            elif send_msg == "cluster-1": 
+                id_cls += 1
+                param = [data_msg["time"], id_cls] + data_msg["s1"].tolist() + data_msg["s2"].tolist()
+                print(f"------Cluster-------,{param}")
+                insert_sql = 'insert into cluster_table(time, id, A1, A2, A3, AC, V1, V2, V3, VC) values(:0,:1,:2,:3,:4,:5,:6,:7,:8,:9)'
+                cursor.execute(insert_sql, param)
             
             elif send_msg == "irons-1":
                 data_msg.pop('results_type')
+                if data_msg["iron"] != 0:
+                    iron_flag = 1
                 id_irons += 1
                 insert_sql = "insert into iron_table(time, id, iron_score, iron) values(:time, :num, :iron_score, :iron)"
                 param = {**data_msg, "num": id_irons}
-                print("---------:", param)
+                # print("---------:", param)
                 cursor.execute(insert_sql, param)
+
 
             elif send_msg == "life-1":
                 data_msg.pop('results_type')
+                if data_msg["life"] != 0:
+                    knife_flag = 1
                 id_life += 1
                 insert_sql = "insert into life_table(time, id, life_score, life) values(:time, :num, :life_score, :life)"
                 param = {**data_msg, "num": id_life} 
-                print("---------:", param)
+                # print("---------:", param)
                 cursor.execute(insert_sql, param)
                 
             elif send_msg == "running-1":
                 data_msg.pop('results_type')
                 id_running += 1
-                insert_sql = "insert into running_table(time, id, running) values(:time, :num, :running)"
                 param = {**data_msg, "num": id_running}
-                print("---------:", param)
+                if data_msg["running"] == 1:
+                    running_flag = 1
+                    # param不变，其running为1
+                if data_msg["running"] == 0 and running_flag == 1:
+                    if iron_flag == 1 and knife_flag == 1:
+                        param["running"] = 5
+                    elif iron_flag == 1 and knife_flag == 0:
+                        param["running"] = 3
+                    elif iron_flag == 0 and knife_flag == 1:
+                        param["running"] = 2
+                    else:
+                        param["running"] = 4
+                    running_flag = 0
+                    iron_flag = 0
+                    knife_flag = 0
+
+                insert_sql = "insert into running_table(time, id, operate) values(:time, :num, :running)"
+                # print("---------:", param)
                 cursor.execute(insert_sql, param)
 
             else:
@@ -79,6 +121,10 @@ if __name__ == "__main__":
     table_data = sql1.fetchmany(10) 
     if len(table_data) != 0:
         table_data = [item[0] for item in table_data]
+        if "DOWNSAMPLE_TABLE" in table_data:
+            cursor.execute("drop table downsample_table")
+        if "CLUSTER_TABLE" in table_data:
+            cursor.execute("drop table cluster_table")
         if "IRON_TABLE" in table_data:
             cursor.execute("drop table iron_table")
         if "LIFE_TABLE" in table_data:
@@ -86,6 +132,36 @@ if __name__ == "__main__":
         if "RUNNING_TABLE" in table_data:
             cursor.execute("drop table running_table")
         # cursor.commit()
+
+    create_table = """
+        create table downsample_table(
+            time varchar(30),
+            id integer,
+            A1 float,
+            A2 float,
+            A3 float,
+            V1 float,
+            V2 float,
+            V3 float
+        )
+    """       
+    create_flag = cursor.execute(create_table)  
+
+    create_table = """
+        create table cluster_table(
+            time varchar(30),
+            id integer,
+            A1 float,
+            A2 float,
+            A3 float,
+            AC float,
+            V1 float,
+            V2 float,
+            V3 float,
+            VC float
+        )
+    """       
+    create_flag = cursor.execute(create_table)  
 
     create_table = """
         create table iron_table(
@@ -111,7 +187,7 @@ if __name__ == "__main__":
         create table running_table(
             time varchar(30),
             id integer,
-            running integer 
+            operate integer 
         )
     """
     create_flag = cursor.execute(create_table)  

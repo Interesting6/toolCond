@@ -55,7 +55,7 @@ def archived_data_sensor1(rs,client):
         # client.write_points(influxdb_datas,batch_size=1)        # batch_size设为1是因为设置为其他将无法插入所有数据，如batch_size设为300时，300条数据时间戳均相同，导致只插入len(result)/batch_size的条数
         payload={"type":"data","contents":{"data":concatenate_arrays,"sensor":1, "time":now_time()}}
         client.publish(payload, "feature-extraction-1")
-        print('insert success')
+        # print('insert success')
         end = datetime.datetime.now()
         spend_time = end - begin
         print("spend_time=",spend_time)
@@ -77,7 +77,7 @@ def archived_data_sensor2(rs,client):
         # client.write_points(influxdb_datas,batch_size=1)
         payload={"type":"data","contents":{"data":concatenate_arrays,"sensor":2, "time":now_time()}}
         client.publish(payload, "feature-extraction-1")
-        print('insert success')
+        # print('insert success')
         end = datetime.datetime.now()
         spend_time = end - begin
         print("spend_time=",spend_time)
@@ -88,7 +88,7 @@ def archived_data_sensor2(rs,client):
 if __name__=="__main__":
     try:
         # 连接传感器1  redis
-        rs1 = redis.Redis(host="192.168.0.21", port=6379, db=0)
+        rs1 = redis.Redis(host="192.168.0.117", port=6379, db=0)
         rs1.xgroup_destroy("sensor11", "group1")   #删除消费组
         response1=rs1.xgroup_create('sensor11','group1','$') #创建消费组    0-0  # 从头部开始消费
         print("sensor1 response = ", response1)
@@ -97,7 +97,7 @@ if __name__=="__main__":
 
     try:
         # 连接传感器2  redis
-        rs2 = redis.Redis(host="192.168.0.22", port=6380, db=0)
+        rs2 = redis.Redis(host="192.168.0.117", port=6380, db=0)
         rs2.xgroup_destroy("sensor21", "group1")   #删除消费组
         response2=rs2.xgroup_create('sensor21','group1','$') #创建消费组    0-0  # 从头部开始消费
         print("sensor2 response = ", response2)

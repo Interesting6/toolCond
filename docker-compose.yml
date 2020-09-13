@@ -24,7 +24,7 @@ services:
 
     edgeai_8cwH3zaAWEwLPTB9XSHJNE_feature-extraction-1:
         environment:
-            ECCI_PUB_TARGETS: "{'irons-1': 'WbQFj3A6FhvHpWuJoBgYNL', 'life-1': 'WbQFj3A6FhvHpWuJoBgYNL', 'running-1': 'WbQFj3A6FhvHpWuJoBgYNL'}"
+            ECCI_PUB_TARGETS: "{'irons-1': 'WbQFj3A6FhvHpWuJoBgYNL', 'life-1': 'WbQFj3A6FhvHpWuJoBgYNL', 'running-1': 'WbQFj3A6FhvHpWuJoBgYNL','save-1': 'WbQFj3A6FhvHpWuJoBgYNL', 'cluster-1': 'WbQFj3A6FhvHpWuJoBgYNL'}"
             ECCI_CONTAINER_TYPE: edge
             ECCI_APP_ID: 8cwH3zaAWEwLPTB9XSHJNE
             ECCI_CONTAINER_NAME: feature-extraction-1
@@ -43,7 +43,26 @@ services:
         container_name: edgeai_8cwH3zaAWEwLPTB9XSHJNE_feature-extraction-1
         restart: always
 
-
+    edgeai_8cwH3zaAWEwLPTB9XSHJNE_cluster-1:
+        environment:
+            ECCI_PUB_TARGETS: "{'save-1': 'WbQFj3A6FhvHpWuJoBgYNL'}"
+            ECCI_CONTAINER_TYPE: edge
+            ECCI_APP_ID: 8cwH3zaAWEwLPTB9XSHJNE
+            ECCI_CONTAINER_NAME: cluster-1
+            ECCI_LOCAL_CONTAINERS: "['edgeai_8cwH3zaAWEwLPTB9XSHJNE_cluster']"
+            ECCI_LOCAL_BROKER_IP: 192.168.0.23
+            ECCI_LOCAL_BROKER_PORT: 1888
+            ECCI_LOCAL_BROKER_ID: WbQFj3A6FhvHpWuJoBgYNL
+            ECCI_AGENT_ID: agent-id
+            ECCI_APP_TYPE: controller
+            ECCI_AGENT_IP: 192.168.0.23
+        volumes:
+            - ./cluster/ecci_sdk.py:/cluster/ecci_sdk.py
+            - ./cluster/models:/cluster/models
+            - ./cluster/pred.py:/cluster/pred.py
+        image: cluster:v1
+        container_name: edgeai_8cwH3zaAWEwLPTB9XSHJNE_cluster-1
+        restart: always
 
     edgeai_8cwH3zaAWEwLPTB9XSHJNE_life-1:
         environment:
