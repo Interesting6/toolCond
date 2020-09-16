@@ -44,16 +44,20 @@ def receive_mqtt_msg(cursor):
 
             elif send_msg == "feature-extraction-1": 
                 id_ds += 1
-                t = [data_msg["time"], id_ds]
+                t = [data_msg["time"],]
                 param = [ t + d_s.tolist() for d_s in data_msg["down_sample"]]
                 # print(f"------DownSample-------,{param}")
-                cursor.executemany('insert into downsample_table(time, id, A1, A2, A3, V1, V2, V3) values(:0,:1,:2,:3,:4,:5,:6,:7)', param)
+                t = ',:'.join([ str(i) for i in range(21)])
+                t = f"values(:{t})"
+                insert_sql = 'insert into downsample_table(time, A1, A2, A3, V1, V2, V3, Mean_A1, Mean_A2, Mean_A3, \
+                    Mean_V1, Mean_V2, Mean_V3, Variance_A, Variance_V, Skew_A1, Skew_A2, Skew_A3, Skew_V1, Skew_V2, Skew_V3) ' + t
+                cursor.executemany(insert_sql, param)
                 
             elif send_msg == "cluster-1": 
                 id_cls += 1
-                param = [data_msg["time"], id_cls] + data_msg["s1"].tolist() + data_msg["s2"].tolist()
+                param = [data_msg["time"],] + data_msg["s1"].tolist() + data_msg["s2"].tolist()
                 print(f"------Cluster-------,{param}")
-                insert_sql = 'insert into cluster_table(time, id, A1, A2, A3, AC, V1, V2, V3, VC) values(:0,:1,:2,:3,:4,:5,:6,:7,:8,:9)'
+                insert_sql = 'insert into cluster_table(time, A1, A2, A3, AC, V1, V2, V3, VC) values(:0,:1,:2,:3,:4,:5,:6,:7,:8)'
                 cursor.execute(insert_sql, param)
             
             elif send_msg == "irons-1":
@@ -61,8 +65,8 @@ def receive_mqtt_msg(cursor):
                 if data_msg["iron"] != 0:
                     iron_flag = 1
                 id_irons += 1
-                insert_sql = "insert into iron_table(time, id, iron_score, iron) values(:time, :num, :iron_score, :iron)"
-                param = {**data_msg, "num": id_irons}
+                insert_sql = "insert into iron_table(time, iron_score, iron) values(:time, :iron_score, :iron)"
+                param = {**data_msg}
                 # print("---------:", param)
                 cursor.execute(insert_sql, param)
 
@@ -72,32 +76,36 @@ def receive_mqtt_msg(cursor):
                 if data_msg["life"] != 0:
                     knife_flag = 1
                 id_life += 1
-                insert_sql = "insert into life_table(time, id, life_score, life) values(:time, :num, :life_score, :life)"
-                param = {**data_msg, "num": id_life} 
+                insert_sql = "insert into life_table(time, life_score, life) values(:time, :life_score, :life)"
+                param = {**data_msg} 
                 # print("---------:", param)
                 cursor.execute(insert_sql, param)
                 
             elif send_msg == "running-1":
                 data_msg.pop('results_type')
                 id_running += 1
-                param = {**data_msg, "num": id_running}
+                param = {**data_msg}
                 if data_msg["running"] == 1:
                     running_flag = 1
                     # param不变，其running为1
                 if data_msg["running"] == 0 and running_flag == 1:
                     if iron_flag == 1 and knife_flag == 1:
-                        param["running"] = 5
+                        param["running"] = 4
                     elif iron_flag == 1 and knife_flag == 0:
                         param["running"] = 3
                     elif iron_flag == 0 and knife_flag == 1:
                         param["running"] = 2
-                    else:
-                        param["running"] = 4
+                    else: # 从运行到停止，既不去铁屑也不换刀
+                        param["running"] = 0
                     running_flag = 0
                     iron_flag = 0
                     knife_flag = 0
+                ###
+                # 从停止到停止：
+                # if data_msg["running"] == 0 and running_flag == 0: # 这时param["running"] = data_msg["running"] = 0，故下面赋值可以不写
+                #     param["running"] = 0
 
-                insert_sql = "insert into running_table(time, id, operate) values(:time, :num, :running)"
+                insert_sql = "insert into running_table(time, operate) values(:time, :running)"
                 # print("---------:", param)
                 cursor.execute(insert_sql, param)
 
@@ -136,21 +144,24 @@ if __name__ == "__main__":
     create_table = """
         create table downsample_table(
             time varchar(30),
-            id integer,
             A1 float,
             A2 float,
             A3 float,
             V1 float,
             V2 float,
-            V3 float
+            V3 float,
+            Mean_A1 float,  Mean_A2 float,  Mean_A3 float,
+            Mean_V1 float, Mean_V2 float, Mean_V3 float, 
+            Variance_A float, Variance_V float, 
+            Skew_A1 float, Skew_A2 float, Skew_A3 float, 
+            Skew_V1 float, Skew_V2 float, Skew_V3 float
         )
-    """       
-    create_flag = cursor.execute(create_table)  
+    """ 
+    create_flag = cursor.execute(create_table)
 
     create_table = """
         create table cluster_table(
             time varchar(30),
-            id integer,
             A1 float,
             A2 float,
             A3 float,
@@ -166,7 +177,6 @@ if __name__ == "__main__":
     create_table = """
         create table iron_table(
             time varchar(30),
-            id integer,
             iron_score float,
             iron integer 
         )
@@ -176,7 +186,6 @@ if __name__ == "__main__":
     create_table = """
         create table life_table(
             time varchar(30),
-            id integer,
             life_score float,
             life integer 
         )
@@ -186,7 +195,6 @@ if __name__ == "__main__":
     create_table = """
         create table running_table(
             time varchar(30),
-            id integer,
             operate integer 
         )
     """

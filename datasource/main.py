@@ -88,7 +88,8 @@ def archived_data_sensor2(rs,client):
 if __name__=="__main__":
     try:
         # 连接传感器1  redis
-        rs1 = redis.Redis(host="192.168.0.117", port=6379, db=0)
+        # rs1 = redis.Redis(host="192.168.0.117", port=6379, db=0)
+        rs1 = redis.Redis(host="192.168.0.21", port=6379, db=0)
         rs1.xgroup_destroy("sensor11", "group1")   #删除消费组
         response1=rs1.xgroup_create('sensor11','group1','$') #创建消费组    0-0  # 从头部开始消费
         print("sensor1 response = ", response1)
@@ -97,7 +98,8 @@ if __name__=="__main__":
 
     try:
         # 连接传感器2  redis
-        rs2 = redis.Redis(host="192.168.0.117", port=6380, db=0)
+        # rs2 = redis.Redis(host="192.168.0.117", port=6380, db=0)
+        rs2 = redis.Redis(host="192.168.0.22", port=6380, db=0)
         rs2.xgroup_destroy("sensor21", "group1")   #删除消费组
         response2=rs2.xgroup_create('sensor21','group1','$') #创建消费组    0-0  # 从头部开始消费
         print("sensor2 response = ", response2)
@@ -110,8 +112,8 @@ if __name__=="__main__":
 
     try:
         sched = BlockingScheduler()
-        sched.add_job(archived_data_sensor1, 'interval', seconds=5,args=[rs1,ecci_client],id="archived_sensor1")
-        sched.add_job(archived_data_sensor2, 'interval', seconds=5,args=[rs2,ecci_client],id="archived_sensor2")
+        sched.add_job(archived_data_sensor1, 'interval', seconds=3,args=[rs1,ecci_client],id="archived_sensor1")
+        sched.add_job(archived_data_sensor2, 'interval', seconds=3,args=[rs2,ecci_client],id="archived_sensor2")
         sched.start()
     except Exception as e:
         print(e)
