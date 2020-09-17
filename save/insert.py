@@ -15,6 +15,8 @@ iron_flag = 0
 knife_flag = 0
 running_flag = 0
 
+
+
 def receive_mqtt_msg(cursor):
     global id_irons
     global id_life
@@ -120,9 +122,15 @@ def receive_mqtt_msg(cursor):
 
 
 if __name__ == "__main__":
-
     os.environ['NLS_LANG']='SIMPLIFIED CHINESE_CHINA.UTF8'  #设置语言环境
-    db = cx_Oracle.connect('test','test','39.99.136.63:1521/helowin')   #连接数据库   用户名、密码、数据库名
+    db_ip = os.environ.get("ORACLE_IP")
+    db_port = os.environ.get("ORACLE_PORT", default="1521")
+    db_service = os.environ.get("ORACLE_SERVICE")
+    db_user = os.environ.get("ORACLE_USER", default="gxb")
+    db_pwd = os.environ.get("ORACLE_PWD", default="gxb")
+
+    # db = cx_Oracle.connect('test2','test2','39.99.136.63:1521/helowin')   #连接数据库   用户名、密码、数据库名
+    db = cx_Oracle.connect(db_user, db_pwd, f'{db_ip}:{db_port}/{db_service}')
     cursor = db.cursor()
 
     sql1 = cursor.execute('select table_name from user_tables')  #查询数据
