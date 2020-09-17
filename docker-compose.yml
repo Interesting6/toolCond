@@ -13,6 +13,10 @@ services:
             ECCI_AGENT_ID: agent-id
             ECCI_APP_TYPE: controller
             ECCI_AGENT_IP: 192.168.0.23
+            REDIS1_IP: 192.168.0.21
+            REDIS1_PORT: 6379
+            REDIS2_IP: 192.168.0.22
+            REDIS2_PORT: 6380
         volumes:
             - ./datasource/main.py:/datasource/main.py
             - ./datasource/ecci_sdk.py:/datasource/ecci_sdk.py
@@ -147,6 +151,11 @@ services:
             ECCI_AGENT_ID: agent-id
             ECCI_APP_TYPE: controller
             ECCI_AGENT_IP: 192.168.0.23
+            ORACLE_IP: 39.99.136.63
+            ORACLE_PORT: 1521
+            ORACLE_SERVICE: helowin
+            ORACLE_USER: gxb
+            ORACLE_PWD: gxb
         volumes:
             # - ./save/pred.py:/save/pred.py
             - ./save/insert.py:/save/insert.py
